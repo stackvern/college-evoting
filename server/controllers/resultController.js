@@ -9,7 +9,7 @@ const getDashboardResults = (req, res) => {
     `;
 
     db.query(statsQuery, (err, stats) => {
-
+            console.error(err); 
         if (err) {
             return res.status(500).json({
                 success: false,
@@ -42,6 +42,7 @@ const getDashboardResults = (req, res) => {
         db.query(resultQuery, (err, rows) => {
 
             if (err) {
+                 console.error(err); 
                 return res.status(500).json({
                     success: false,
                     message: "Result Error"
