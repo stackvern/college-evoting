@@ -145,9 +145,22 @@ const submitVote = (req, res) => {
     };
 
     const submitVotes = (presidentPositionId, secretaryPositionId, treasurerPositionId) => {
-        db.beginTransaction((err) => {
+
+    db.getConnection((err, connection) => {
+
+        if (err) {
+            console.error(err);
+            return res.status(500).json({
+                success: false,
+                message: "Database Connection Error"
+            });
+        }
+
+        connection.beginTransaction((err) => {
+
             if (err) {
-                console.error("Transaction begin error:", err);
+                connection.release();
+                console.error(err);
                 return res.status(500).json({
                     success: false,
                     message: "Transaction Error"
@@ -163,23 +176,30 @@ const submitVote = (req, res) => {
                 (?,?,?)
             `;
 
-            db.query(
+            connection.query(
                 voteSQL,
                 [
                     studentId,
                     presidentId,
                     presidentPositionId,
+
                     studentId,
                     secretaryId,
                     secretaryPositionId,
+
                     studentId,
                     treasurerId,
                     treasurerPositionId
                 ],
                 (err) => {
+
                     if (err) {
-                        console.error("Vote insert error:", err);
-                        return db.rollback(() => {
+
+                        console.error(err);
+
+                        return connection.rollback(() => {
+                            connection.release();
+
                             return res.status(500).json({
                                 success: false,
                                 message: "Vote submission failed."
@@ -187,42 +207,67 @@ const submitVote = (req, res) => {
                         });
                     }
 
-                    db.query(
+                    connection.query(
                         "UPDATE students SET has_voted = TRUE WHERE id = ?",
                         [studentId],
                         (err) => {
+
                             if (err) {
-                                console.error("Student update error:", err);
-                                return db.rollback(() => {
+
+                                console.error(err);
+
+                                return connection.rollback(() => {
+
+                                    connection.release();
+
                                     return res.status(500).json({
                                         success: false,
                                         message: "Vote Update Failed"
                                     });
+
                                 });
+
                             }
 
-                            db.commit((err) => {
+                            connection.commit((err) => {
+
                                 if (err) {
-                                    console.error("Commit error:", err);
-                                    return db.rollback(() => {
+
+                                    console.error(err);
+
+                                    return connection.rollback(() => {
+
+                                        connection.release();
+
                                         return res.status(500).json({
                                             success: false,
                                             message: "Commit Failed"
                                         });
+
                                     });
+
                                 }
+
+                                connection.release();
 
                                 return res.status(200).json({
                                     success: true,
                                     message: "Vote Submitted Successfully"
                                 });
+
                             });
+
                         }
                     );
+
                 }
             );
+
         });
-    };
+
+    });
+
+};
 
     validateElectionStatus();
 };
