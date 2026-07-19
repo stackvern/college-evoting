@@ -14,7 +14,17 @@ const resultRoutes = require("./routes/resultRoutes");
 
 const app = express();
 
-app.use(cors());
+const cors = require("cors");
+
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5175",
+    "https://college-evoting.vercel.app"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
 app.use(express.json());
 
 // Test Route
